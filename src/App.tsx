@@ -210,21 +210,22 @@ function App() {
 
       {/* Navigation Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="flex space-x-1 bg-white/10 backdrop-blur-md rounded-xl p-1">
+        <div className="flex flex-wrap gap-2 bg-slate-800/50 backdrop-blur-md rounded-2xl p-2 border border-white/10 shadow-xl">
           {tabs.map((tab) => {
             const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'bg-white text-slate-900 shadow-lg'
-                    : 'text-white hover:bg-white/10'
+                className={`flex items-center space-x-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 min-w-[160px] justify-center ${
+                  isActive
+                    ? 'bg-gradient-to-r from-blue-600 to-emerald-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+                    : 'text-blue-200 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20'
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span>{tab.label}</span>
+                <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-blue-300'}`} />
+                <span className="font-medium">{tab.label}</span>
               </button>
             );
           })}
