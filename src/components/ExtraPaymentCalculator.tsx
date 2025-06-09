@@ -21,6 +21,17 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
 
   const calculateWithExtraPayments = useMemo(() => {
     const { principal, interestRate } = loanData;
+    
+    if (!principal || !interestRate || principal <= 0 || interestRate <= 0) {
+      return {
+        totalPayments: 0,
+        totalPaid: 0,
+        totalInterest: 0,
+        schedule: [],
+        yearsToPayoff: 0
+      };
+    }
+
     const monthlyRate = interestRate / 100 / 12;
     const originalPayment = originalResults.monthlyPayment;
     
@@ -37,11 +48,11 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
       let extraThisMonth = 0;
 
       // Add extra payments based on type
-      if (paymentType === 'monthly') {
+      if (paymentType === 'monthly' && extraPayment > 0) {
         extraThisMonth = extraPayment;
-      } else if (paymentType === 'yearly' && month % 12 === 0) {
+      } else if (paymentType === 'yearly' && month % 12 === 0 && extraPayment > 0) {
         extraThisMonth = extraPayment;
-      } else if (paymentType === 'onetime' && month === oneTimeMonth) {
+      } else if (paymentType === 'onetime' && month === oneTimeMonth && oneTimeAmount > 0) {
         extraThisMonth = oneTimeAmount;
       }
 
@@ -75,9 +86,9 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
   }, [loanData, originalResults, extraPayment, paymentType, oneTimeAmount, oneTimeMonth]);
 
   const savings = {
-    interestSaved: originalResults.totalInterest - calculateWithExtraPayments.totalInterest,
-    timeSaved: (originalResults.amortizationSchedule.length - calculateWithExtraPayments.totalPayments),
-    yearsSaved: (originalResults.amortizationSchedule.length - calculateWithExtraPayments.totalPayments) / 12
+    interestSaved: Math.max(0, originalResults.totalInterest - calculateWithExtraPayments.totalInterest),
+    timeSaved: Math.max(0, originalResults.amortizationSchedule.length - calculateWithExtraPayments.totalPayments),
+    yearsSaved: Math.max(0, (originalResults.amortizationSchedule.length - calculateWithExtraPayments.totalPayments) / 12)
   };
 
   return (
@@ -127,8 +138,9 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
                   </div>
                   <input
                     type="number"
+                    min="0"
                     value={extraPayment}
-                    onChange={(e) => setExtraPayment(Number(e.target.value))}
+                    onChange={(e) => setExtraPayment(Math.max(0, Number(e.target.value)))}
                     className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="100"
                   />
@@ -152,8 +164,9 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
                     </div>
                     <input
                       type="number"
+                      min="0"
                       value={oneTimeAmount}
-                      onChange={(e) => setOneTimeAmount(Number(e.target.value))}
+                      onChange={(e) => setOneTimeAmount(Math.max(0, Number(e.target.value)))}
                       className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                       placeholder="10000"
                     />
@@ -168,7 +181,7 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
                     min="1"
                     max="360"
                     value={oneTimeMonth}
-                    onChange={(e) => setOneTimeMonth(Number(e.target.value))}
+                    onChange={(e) => setOneTimeMonth(Math.min(360, Math.max(1, Number(e.target.value))))}
                     className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   />
                   <p className="mt-1 text-sm text-blue-200">
@@ -215,7 +228,7 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
               </div>
               <p className="text-emerald-100 text-sm font-medium">Interest Saved</p>
               <p className="text-emerald-200 text-xs">
-                {((savings.interestSaved / originalResults.totalInterest) * 100).toFixed(1)}% reduction
+                {originalResults.totalInterest > 0 ? ((savings.interestSaved / originalResults.totalInterest) * 100).toFixed(1) : 0}% reduction
               </p>
             </div>
 
@@ -291,7 +304,7 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
                       -{formatCurrency(savings.interestSaved, currency)}
                     </td>
                     <td className="py-3 px-4 text-right text-emerald-400">
-                      -{formatCurrency(originalResults.totalPayment - calculateWithExtraPayments.totalPaid, currency)}
+                      -{formatCurrency(Math.max(0, originalResults.totalPayment - calculateWithExtraPayments.totalPaid), currency)}
                     </td>
                     <td className="py-3 px-4 text-right text-emerald-400">
                       -{savings.yearsSaved.toFixed(1)} years
@@ -303,46 +316,48 @@ const ExtraPaymentCalculator: React.FC<ExtraPaymentCalculatorProps> = ({
           </div>
 
           {/* First Year Schedule with Extra Payments */}
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4">First Year Schedule (with Extra Payments)</h3>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/20">
-                    <th className="text-left py-2 px-3 text-blue-200">Month</th>
-                    <th className="text-right py-2 px-3 text-blue-200">Payment</th>
-                    <th className="text-right py-2 px-3 text-blue-200">Extra</th>
-                    <th className="text-right py-2 px-3 text-blue-200">Principal</th>
-                    <th className="text-right py-2 px-3 text-blue-200">Interest</th>
-                    <th className="text-right py-2 px-3 text-blue-200">Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {calculateWithExtraPayments.schedule.map((payment) => (
-                    <tr key={payment.month} className="border-b border-white/10 hover:bg-white/5">
-                      <td className="py-2 px-3 text-white">{payment.month}</td>
-                      <td className="py-2 px-3 text-right text-white">
-                        {formatCurrencyPrecise(payment.payment, currency)}
-                      </td>
-                      <td className="py-2 px-3 text-right text-yellow-300">
-                        {payment.extra > 0 ? formatCurrencyPrecise(payment.extra, currency) : '-'}
-                      </td>
-                      <td className="py-2 px-3 text-right text-blue-300">
-                        {formatCurrencyPrecise(payment.principal, currency)}
-                      </td>
-                      <td className="py-2 px-3 text-right text-red-300">
-                        {formatCurrencyPrecise(payment.interest, currency)}
-                      </td>
-                      <td className="py-2 px-3 text-right text-white">
-                        {formatCurrency(payment.balance, currency)}
-                      </td>
+          {calculateWithExtraPayments.schedule.length > 0 && (
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+              <h3 className="text-lg font-semibold text-white mb-4">First Year Schedule (with Extra Payments)</h3>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/20">
+                      <th className="text-left py-2 px-3 text-blue-200">Month</th>
+                      <th className="text-right py-2 px-3 text-blue-200">Payment</th>
+                      <th className="text-right py-2 px-3 text-blue-200">Extra</th>
+                      <th className="text-right py-2 px-3 text-blue-200">Principal</th>
+                      <th className="text-right py-2 px-3 text-blue-200">Interest</th>
+                      <th className="text-right py-2 px-3 text-blue-200">Balance</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {calculateWithExtraPayments.schedule.map((payment) => (
+                      <tr key={payment.month} className="border-b border-white/10 hover:bg-white/5">
+                        <td className="py-2 px-3 text-white">{payment.month}</td>
+                        <td className="py-2 px-3 text-right text-white">
+                          {formatCurrencyPrecise(payment.payment, currency)}
+                        </td>
+                        <td className="py-2 px-3 text-right text-yellow-300">
+                          {payment.extra > 0 ? formatCurrencyPrecise(payment.extra, currency) : '-'}
+                        </td>
+                        <td className="py-2 px-3 text-right text-blue-300">
+                          {formatCurrencyPrecise(payment.principal, currency)}
+                        </td>
+                        <td className="py-2 px-3 text-right text-red-300">
+                          {formatCurrencyPrecise(payment.interest, currency)}
+                        </td>
+                        <td className="py-2 px-3 text-right text-white">
+                          {formatCurrency(payment.balance, currency)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

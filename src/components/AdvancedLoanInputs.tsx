@@ -53,8 +53,10 @@ const AdvancedLoanInputs: React.FC<AdvancedLoanInputsProps> = ({
                 <input
                   type="number"
                   step="0.1"
+                  min="0"
+                  max="100"
                   value={downPaymentPercent}
-                  onChange={(e) => setDownPaymentPercent(Number(e.target.value))}
+                  onChange={(e) => setDownPaymentPercent(Math.min(100, Math.max(0, Number(e.target.value))))}
                   className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   placeholder="20"
                 />
@@ -82,8 +84,9 @@ const AdvancedLoanInputs: React.FC<AdvancedLoanInputsProps> = ({
             </div>
             <input
               type="number"
+              min="0"
               value={propertyTax}
-              onChange={(e) => setPropertyTax(Number(e.target.value))}
+              onChange={(e) => setPropertyTax(Math.max(0, Number(e.target.value)))}
               className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="12000"
             />
@@ -104,8 +107,9 @@ const AdvancedLoanInputs: React.FC<AdvancedLoanInputsProps> = ({
             </div>
             <input
               type="number"
+              min="0"
               value={homeInsurance}
-              onChange={(e) => setHomeInsurance(Number(e.target.value))}
+              onChange={(e) => setHomeInsurance(Math.max(0, Number(e.target.value)))}
               className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="2400"
             />
@@ -126,8 +130,9 @@ const AdvancedLoanInputs: React.FC<AdvancedLoanInputsProps> = ({
             </div>
             <input
               type="number"
+              min="0"
               value={pmi}
-              onChange={(e) => setPmi(Number(e.target.value))}
+              onChange={(e) => setPmi(Math.max(0, Number(e.target.value)))}
               className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="3600"
             />
@@ -148,8 +153,9 @@ const AdvancedLoanInputs: React.FC<AdvancedLoanInputsProps> = ({
             </div>
             <input
               type="number"
+              min="0"
               value={hoaFees}
-              onChange={(e) => setHoaFees(Number(e.target.value))}
+              onChange={(e) => setHoaFees(Math.max(0, Number(e.target.value)))}
               className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="1200"
             />

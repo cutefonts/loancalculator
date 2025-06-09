@@ -58,7 +58,7 @@ function App() {
   const calculateLoan = useMemo(() => {
     const { principal, interestRate, termYears, paymentFrequency } = loanData;
     
-    if (!principal || !interestRate || !termYears) {
+    if (!principal || !interestRate || !termYears || principal <= 0 || interestRate <= 0 || termYears <= 0) {
       return null;
     }
 
@@ -69,11 +69,21 @@ function App() {
 
     let payment: number;
     if (paymentFrequency === 'monthly') {
-      payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, termYears * 12)) / 
-                (Math.pow(1 + monthlyRate, termYears * 12) - 1);
+      if (monthlyRate === 0) {
+        // Handle 0% interest rate
+        payment = principal / (termYears * 12);
+      } else {
+        payment = principal * (monthlyRate * Math.pow(1 + monthlyRate, termYears * 12)) / 
+                  (Math.pow(1 + monthlyRate, termYears * 12) - 1);
+      }
     } else {
-      payment = principal * (adjustedRate * Math.pow(1 + adjustedRate, totalPayments)) / 
-                (Math.pow(1 + adjustedRate, totalPayments) - 1);
+      if (adjustedRate === 0) {
+        // Handle 0% interest rate
+        payment = principal / totalPayments;
+      } else {
+        payment = principal * (adjustedRate * Math.pow(1 + adjustedRate, totalPayments)) / 
+                  (Math.pow(1 + adjustedRate, totalPayments) - 1);
+      }
     }
 
     const totalPayment = payment * totalPayments;
@@ -87,7 +97,7 @@ function App() {
     for (let i = 0; i < totalPayments; i++) {
       const interestPayment = remainingBalance * adjustedRate;
       const principalPayment = payment - interestPayment;
-      remainingBalance -= principalPayment;
+      remainingBalance = Math.max(0, remainingBalance - principalPayment);
 
       const paymentDate = new Date(startDate);
       if (paymentFrequency === 'monthly') {
@@ -102,7 +112,7 @@ function App() {
         payment: i + 1,
         principal: principalPayment,
         interest: interestPayment,
-        balance: Math.max(0, remainingBalance),
+        balance: remainingBalance,
         date: paymentDate.toLocaleDateString()
       });
 
@@ -288,6 +298,14 @@ function App() {
                   />
                 </>
               )}
+              
+              {!calculateLoan && (
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 text-center">
+                  <Calculator className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-white mb-2">Enter Loan Details</h3>
+                  <p className="text-blue-200">Please enter valid loan amount, interest rate, and term to see calculations.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -298,6 +316,14 @@ function App() {
             originalResults={calculateLoan}
             currency={selectedCurrency}
           />
+        )}
+
+        {activeTab === 'extra' && !calculateLoan && (
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 text-center">
+            <Zap className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Calculate Basic Loan First</h3>
+            <p className="text-blue-200">Please go to the Calculator tab and enter valid loan details to use the Extra Payment Calculator.</p>
+          </div>
         )}
 
         {activeTab === 'compare' && (

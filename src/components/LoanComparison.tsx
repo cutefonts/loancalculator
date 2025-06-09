@@ -39,6 +39,15 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
 
   const calculateLoan = (scenario: LoanScenario) => {
     const { principal, interestRate, termYears } = scenario;
+    
+    if (!principal || !interestRate || !termYears || principal <= 0 || interestRate <= 0 || termYears <= 0) {
+      return {
+        monthlyPayment: 0,
+        totalInterest: 0,
+        totalPayment: 0
+      };
+    }
+
     const monthlyRate = interestRate / 100 / 12;
     const totalPayments = termYears * 12;
     
@@ -60,6 +69,9 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
     ...scenario,
     results: calculateLoan(scenario)
   }));
+
+  // Filter out scenarios with invalid results for comparison
+  const validScenarios = scenariosWithResults.filter(s => s.results.monthlyPayment > 0);
 
   const addScenario = () => {
     const newId = (scenarios.length + 1).toString();
@@ -84,16 +96,18 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
     ));
   };
 
-  // Find best scenario for each metric
-  const bestMonthlyPayment = scenariosWithResults.reduce((best, current) => 
+  // Find best scenario for each metric (only from valid scenarios)
+  const bestMonthlyPayment = validScenarios.length > 0 ? validScenarios.reduce((best, current) => 
     current.results!.monthlyPayment < best.results!.monthlyPayment ? current : best
-  );
-  const lowestInterest = scenariosWithResults.reduce((best, current) => 
+  ) : null;
+  
+  const lowestInterest = validScenarios.length > 0 ? validScenarios.reduce((best, current) => 
     current.results!.totalInterest < best.results!.totalInterest ? current : best
-  );
-  const lowestTotal = scenariosWithResults.reduce((best, current) => 
+  ) : null;
+  
+  const lowestTotal = validScenarios.length > 0 ? validScenarios.reduce((best, current) => 
     current.results!.totalPayment < best.results!.totalPayment ? current : best
-  );
+  ) : null;
 
   return (
     <div className="space-y-8">
@@ -148,6 +162,7 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
                 <td key={scenario.id} className="py-3 px-4 text-center">
                   <input
                     type="number"
+                    min="0"
                     value={scenario.principal}
                     onChange={(e) => updateScenario(scenario.id, 'principal', Number(e.target.value))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -167,6 +182,7 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     value={scenario.interestRate}
                     onChange={(e) => updateScenario(scenario.id, 'interestRate', Number(e.target.value))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -185,8 +201,8 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
                 <td key={scenario.id} className="py-3 px-4 text-center">
                   <input
                     type="number"
+                    min="1"
                     value={scenario.termYears}
-                    
                     onChange={(e) => updateScenario(scenario.id, 'termYears', Number(e.target.value))}
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -212,11 +228,11 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
                 <td 
                   key={scenario.id} 
                   className={`py-3 px-4 text-center font-semibold ${
-                    scenario.id === bestMonthlyPayment.id ? 'text-emerald-400' : 'text-white'
+                    bestMonthlyPayment && scenario.id === bestMonthlyPayment.id ? 'text-emerald-400' : 'text-white'
                   }`}
                 >
-                  {formatCurrencyPrecise(scenario.results!.monthlyPayment, currency)}
-                  {scenario.id === bestMonthlyPayment.id && (
+                  {scenario.results.monthlyPayment > 0 ? formatCurrencyPrecise(scenario.results.monthlyPayment, currency) : 'Invalid'}
+                  {bestMonthlyPayment && scenario.id === bestMonthlyPayment.id && scenario.results.monthlyPayment > 0 && (
                     <div className="text-xs text-emerald-300 mt-1">Lowest</div>
                   )}
                 </td>
@@ -230,11 +246,11 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
                 <td 
                   key={scenario.id} 
                   className={`py-3 px-4 text-center font-semibold ${
-                    scenario.id === lowestInterest.id ? 'text-emerald-400' : 'text-red-300'
+                    lowestInterest && scenario.id === lowestInterest.id ? 'text-emerald-400' : 'text-red-300'
                   }`}
                 >
-                  {formatCurrency(scenario.results!.totalInterest, currency)}
-                  {scenario.id === lowestInterest.id && (
+                  {scenario.results.totalInterest > 0 ? formatCurrency(scenario.results.totalInterest, currency) : 'Invalid'}
+                  {lowestInterest && scenario.id === lowestInterest.id && scenario.results.totalInterest > 0 && (
                     <div className="text-xs text-emerald-300 mt-1">Lowest</div>
                   )}
                 </td>
@@ -248,11 +264,11 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
                 <td 
                   key={scenario.id} 
                   className={`py-3 px-4 text-center font-semibold ${
-                    scenario.id === lowestTotal.id ? 'text-emerald-400' : 'text-white'
+                    lowestTotal && scenario.id === lowestTotal.id ? 'text-emerald-400' : 'text-white'
                   }`}
                 >
-                  {formatCurrency(scenario.results!.totalPayment, currency)}
-                  {scenario.id === lowestTotal.id && (
+                  {scenario.results.totalPayment > 0 ? formatCurrency(scenario.results.totalPayment, currency) : 'Invalid'}
+                  {lowestTotal && scenario.id === lowestTotal.id && scenario.results.totalPayment > 0 && (
                     <div className="text-xs text-emerald-300 mt-1">Lowest</div>
                   )}
                 </td>
@@ -263,10 +279,11 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
             <tr>
               <td className="py-3 px-4 text-white font-medium">Interest as % of Total</td>
               {scenariosWithResults.map(scenario => {
-                const percentage = (scenario.results!.totalInterest / scenario.results!.totalPayment) * 100;
+                const percentage = scenario.results.totalPayment > 0 ? 
+                  (scenario.results.totalInterest / scenario.results.totalPayment) * 100 : 0;
                 return (
                   <td key={scenario.id} className="py-3 px-4 text-center text-blue-300 font-medium">
-                    {percentage.toFixed(1)}%
+                    {percentage > 0 ? percentage.toFixed(1) + '%' : 'Invalid'}
                   </td>
                 );
               })}
@@ -276,68 +293,78 @@ const LoanComparison: React.FC<LoanComparisonProps> = ({ currency }) => {
       </div>
 
       {/* Summary Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-6 text-white">
-          <div className="flex items-center space-x-3 mb-4">
-            <Calculator className="h-6 w-6 text-emerald-200" />
-            <h3 className="font-semibold">Best Monthly Payment</h3>
-          </div>
-          <p className="text-2xl font-bold mb-2">
-            {formatCurrencyPrecise(bestMonthlyPayment.results!.monthlyPayment, currency)}
-          </p>
-          <p className="text-emerald-200 text-sm">
-            {bestMonthlyPayment.name} • {bestMonthlyPayment.termYears} years @ {bestMonthlyPayment.interestRate}%
-          </p>
-        </div>
+      {validScenarios.length >= 2 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {bestMonthlyPayment && (
+            <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl p-6 text-white">
+              <div className="flex items-center space-x-3 mb-4">
+                <Calculator className="h-6 w-6 text-emerald-200" />
+                <h3 className="font-semibold">Best Monthly Payment</h3>
+              </div>
+              <p className="text-2xl font-bold mb-2">
+                {formatCurrencyPrecise(bestMonthlyPayment.results!.monthlyPayment, currency)}
+              </p>
+              <p className="text-emerald-200 text-sm">
+                {bestMonthlyPayment.name} • {bestMonthlyPayment.termYears} years @ {bestMonthlyPayment.interestRate}%
+              </p>
+            </div>
+          )}
 
-        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white">
-          <div className="flex items-center space-x-3 mb-4">
-            <TrendingUp className="h-6 w-6 text-blue-200" />
-            <h3 className="font-semibold">Lowest Interest</h3>
-          </div>
-          <p className="text-2xl font-bold mb-2">
-            {formatCurrency(lowestInterest.results!.totalInterest, currency)}
-          </p>
-          <p className="text-blue-200 text-sm">
-            {lowestInterest.name} • {lowestInterest.termYears} years @ {lowestInterest.interestRate}%
-          </p>
-        </div>
+          {lowestInterest && (
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-6 text-white">
+              <div className="flex items-center space-x-3 mb-4">
+                <TrendingUp className="h-6 w-6 text-blue-200" />
+                <h3 className="font-semibold">Lowest Interest</h3>
+              </div>
+              <p className="text-2xl font-bold mb-2">
+                {formatCurrency(lowestInterest.results!.totalInterest, currency)}
+              </p>
+              <p className="text-blue-200 text-sm">
+                {lowestInterest.name} • {lowestInterest.termYears} years @ {lowestInterest.interestRate}%
+              </p>
+            </div>
+          )}
 
-        <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-6 text-white">
-          <div className="flex items-center space-x-3 mb-4">
-            <Calculator className="h-6 w-6 text-purple-200" />
-            <h3 className="font-semibold">Lowest Total Cost</h3>
-          </div>
-          <p className="text-2xl font-bold mb-2">
-            {formatCurrency(lowestTotal.results!.totalPayment, currency)}
-          </p>
-          <p className="text-purple-200 text-sm">
-            {lowestTotal.name} • {lowestTotal.termYears} years @ {lowestTotal.interestRate}%
-          </p>
+          {lowestTotal && (
+            <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-6 text-white">
+              <div className="flex items-center space-x-3 mb-4">
+                <Calculator className="h-6 w-6 text-purple-200" />
+                <h3 className="font-semibold">Lowest Total Cost</h3>
+              </div>
+              <p className="text-2xl font-bold mb-2">
+                {formatCurrency(lowestTotal.results!.totalPayment, currency)}
+              </p>
+              <p className="text-purple-200 text-sm">
+                {lowestTotal.name} • {lowestTotal.termYears} years @ {lowestTotal.interestRate}%
+              </p>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Comparison Insights */}
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-        <h3 className="text-lg font-semibold text-white mb-4">Key Insights</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="text-white font-medium mb-2">Interest Rate Impact</h4>
-            <p className="text-blue-200 text-sm">
-              A {Math.abs(scenariosWithResults[0].interestRate - scenariosWithResults[1].interestRate).toFixed(1)}% 
-              difference in interest rate results in {formatCurrency(Math.abs(scenariosWithResults[0].results!.totalInterest - scenariosWithResults[1].results!.totalInterest), currency)} 
-              difference in total interest paid.
-            </p>
-          </div>
-          <div>
-            <h4 className="text-white font-medium mb-2">Term Length Impact</h4>
-            <p className="text-blue-200 text-sm">
-              Choosing a {Math.abs(scenariosWithResults[0].termYears - scenariosWithResults[1].termYears)} year 
-              difference in loan term affects your monthly payment by {formatCurrency(Math.abs(scenariosWithResults[0].results!.monthlyPayment - scenariosWithResults[1].results!.monthlyPayment), currency)}.
-            </p>
+      {validScenarios.length >= 2 && (
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+          <h3 className="text-lg font-semibold text-white mb-4">Key Insights</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-white font-medium mb-2">Interest Rate Impact</h4>
+              <p className="text-blue-200 text-sm">
+                A {Math.abs(validScenarios[0].interestRate - validScenarios[1].interestRate).toFixed(1)}% 
+                difference in interest rate results in {formatCurrency(Math.abs(validScenarios[0].results!.totalInterest - validScenarios[1].results!.totalInterest), currency)} 
+                difference in total interest paid.
+              </p>
+            </div>
+            <div>
+              <h4 className="text-white font-medium mb-2">Term Length Impact</h4>
+              <p className="text-blue-200 text-sm">
+                Choosing a {Math.abs(validScenarios[0].termYears - validScenarios[1].termYears)} year 
+                difference in loan term affects your monthly payment by {formatCurrency(Math.abs(validScenarios[0].results!.monthlyPayment - validScenarios[1].results!.monthlyPayment), currency)}.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

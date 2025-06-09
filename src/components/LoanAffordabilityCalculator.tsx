@@ -14,15 +14,28 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
   const [loanTerm, setLoanTerm] = useState(30);
   const [debtToIncomeRatio, setDebtToIncomeRatio] = useState(28);
 
-  // Calculate affordability
-  const maxMonthlyPayment = (monthlyIncome * debtToIncomeRatio) / 100 - monthlyDebts;
-  const monthlyRate = interestRate / 100 / 12;
-  const totalPayments = loanTerm * 12;
+  // Calculate affordability with validation
+  const maxMonthlyPayment = Math.max(0, (monthlyIncome * debtToIncomeRatio) / 100 - monthlyDebts);
   
-  const maxLoanAmount = maxMonthlyPayment * (Math.pow(1 + monthlyRate, totalPayments) - 1) / 
-                       (monthlyRate * Math.pow(1 + monthlyRate, totalPayments));
-  
-  const maxHomePrice = maxLoanAmount + downPayment;
+  let maxLoanAmount = 0;
+  let maxHomePrice = 0;
+
+  if (maxMonthlyPayment > 0 && interestRate > 0 && loanTerm > 0) {
+    const monthlyRate = interestRate / 100 / 12;
+    const totalPayments = loanTerm * 12;
+    
+    if (monthlyRate > 0) {
+      maxLoanAmount = maxMonthlyPayment * (Math.pow(1 + monthlyRate, totalPayments) - 1) / 
+                     (monthlyRate * Math.pow(1 + monthlyRate, totalPayments));
+    } else {
+      // Handle 0% interest rate case
+      maxLoanAmount = maxMonthlyPayment * totalPayments;
+    }
+    
+    maxHomePrice = maxLoanAmount + downPayment;
+  }
+
+  const currentDebtToIncomeRatio = monthlyIncome > 0 ? ((monthlyDebts + maxMonthlyPayment) / monthlyIncome * 100) : 0;
 
   const affordabilityMetrics = [
     {
@@ -48,7 +61,7 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
     },
     {
       title: 'Debt-to-Income Ratio',
-      value: `${((monthlyDebts + maxMonthlyPayment) / monthlyIncome * 100).toFixed(1)}%`,
+      value: `${currentDebtToIncomeRatio.toFixed(1)}%`,
       subtitle: `Target: ${debtToIncomeRatio}%`,
       icon: TrendingUp,
       color: 'from-amber-500 to-amber-600'
@@ -84,8 +97,9 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
                 </div>
                 <input
                   type="number"
+                  min="0"
                   value={monthlyIncome}
-                  onChange={(e) => setMonthlyIncome(Number(e.target.value))}
+                  onChange={(e) => setMonthlyIncome(Math.max(0, Number(e.target.value)))}
                   className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
@@ -101,8 +115,9 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
                 </div>
                 <input
                   type="number"
+                  min="0"
                   value={monthlyDebts}
-                  onChange={(e) => setMonthlyDebts(Number(e.target.value))}
+                  onChange={(e) => setMonthlyDebts(Math.max(0, Number(e.target.value)))}
                   className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
@@ -119,8 +134,9 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
                 </div>
                 <input
                   type="number"
+                  min="0"
                   value={downPayment}
-                  onChange={(e) => setDownPayment(Number(e.target.value))}
+                  onChange={(e) => setDownPayment(Math.max(0, Number(e.target.value)))}
                   className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
@@ -134,8 +150,9 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={interestRate}
-                  onChange={(e) => setInterestRate(Number(e.target.value))}
+                  onChange={(e) => setInterestRate(Math.max(0, Number(e.target.value)))}
                   className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
@@ -145,8 +162,9 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
                 </label>
                 <input
                   type="number"
+                  min="1"
                   value={loanTerm}
-                  onChange={(e) => setLoanTerm(Number(e.target.value))}
+                  onChange={(e) => setLoanTerm(Math.max(1, Number(e.target.value)))}
                   className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 />
               </div>
@@ -159,8 +177,10 @@ const LoanAffordabilityCalculator: React.FC<LoanAffordabilityCalculatorProps> = 
               <input
                 type="number"
                 step="0.1"
+                min="1"
+                max="50"
                 value={debtToIncomeRatio}
-                onChange={(e) => setDebtToIncomeRatio(Number(e.target.value))}
+                onChange={(e) => setDebtToIncomeRatio(Math.min(50, Math.max(1, Number(e.target.value))))}
                 className="block w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
               <p className="mt-1 text-sm text-blue-200">Recommended: 28% or lower</p>

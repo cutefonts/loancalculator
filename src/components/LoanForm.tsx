@@ -36,8 +36,9 @@ const LoanForm: React.FC<LoanFormProps> = ({ loanData, setLoanData, currency }) 
             </div>
             <input
               type="number"
+              min="0"
               value={loanData.principal}
-              onChange={(e) => handleChange('principal', Number(e.target.value))}
+              onChange={(e) => handleChange('principal', Math.max(0, Number(e.target.value)))}
               className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="300,000"
             />
@@ -59,8 +60,9 @@ const LoanForm: React.FC<LoanFormProps> = ({ loanData, setLoanData, currency }) 
             <input
               type="number"
               step="0.01"
+              min="0"
               value={loanData.interestRate}
-              onChange={(e) => handleChange('interestRate', Number(e.target.value))}
+              onChange={(e) => handleChange('interestRate', Math.max(0, Number(e.target.value)))}
               className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="6.5"
             />
@@ -81,8 +83,9 @@ const LoanForm: React.FC<LoanFormProps> = ({ loanData, setLoanData, currency }) 
             </div>
             <input
               type="number"
+              min="1"
               value={loanData.termYears}
-              onChange={(e) => handleChange('termYears', Number(e.target.value))}
+              onChange={(e) => handleChange('termYears', Math.max(1, Number(e.target.value)))}
               className="block w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               placeholder="30"
             />
