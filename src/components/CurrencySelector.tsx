@@ -36,7 +36,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-80 bg-slate-800 border border-white/20 rounded-xl shadow-2xl z-50 max-h-96 overflow-hidden">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-slate-800/95 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl z-[9999] max-h-96 overflow-hidden">
           {/* Search */}
           <div className="p-3 border-b border-white/10">
             <div className="relative">
@@ -124,7 +124,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({
       {/* Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-40" 
+          className="fixed inset-0 z-[9998]" 
           onClick={() => {
             setIsOpen(false);
             setSearchTerm('');

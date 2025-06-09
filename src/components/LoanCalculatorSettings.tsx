@@ -69,7 +69,7 @@ const LoanCalculatorSettings: React.FC<LoanCalculatorSettingsProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-slate-800 border border-white/20 rounded-xl shadow-2xl z-50">
+        <div className="absolute top-full right-0 mt-2 w-80 bg-slate-800/95 backdrop-blur-md border border-white/20 rounded-xl shadow-2xl z-[9999]">
           <div className="p-4">
             <h3 className="text-lg font-semibold text-white mb-4">Calculator Settings</h3>
 
@@ -185,7 +185,7 @@ const LoanCalculatorSettings: React.FC<LoanCalculatorSettingsProps> = ({
       {/* Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-40" 
+          className="fixed inset-0 z-[9998]" 
           onClick={() => setIsOpen(false)}
         />
       )}
